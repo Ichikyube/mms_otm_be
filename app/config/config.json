@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "armin",
+    "password": 3031323334,
+    "database": "mms_otm",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "armin",
+    "password": 3031323334,
+    "database": "mms_otm",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "armin",
+    "password": 3031323334,
+    "database": "mms_otm",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  }
+}
