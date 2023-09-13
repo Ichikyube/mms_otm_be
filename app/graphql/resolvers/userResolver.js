@@ -1,6 +1,5 @@
-
-import { User } from '../models';
-import UserType from '../types/userType.js';
+import { User } from "../models";
+import UserType from "../types/userType.js";
 
 const userResolver = {
   user: {

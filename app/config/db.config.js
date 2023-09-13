@@ -1,0 +1,18 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+const DATABASE_USERNAME = process.env.DATABASE_USERNAME;
+const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD;
+const DATABASE_HOSTNAME = process.env.DATABASE_HOSTNAME;
+const DATABASE_PORT = process.env.DATABASE_PORT;
+const DATABASE_NAME = process.env.DATABASE_DEVELOPMENT_NAME;
+const databaseURI = `postgresql://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOSTNAME}:${DATABASE_PORT}/${DATABASE_NAME}?ssl=false`;
+
+export default databaseURI;
+export {
+  DATABASE_USERNAME,
+  DATABASE_PASSWORD,
+  DATABASE_HOSTNAME,
+  DATABASE_PORT,
+  DATABASE_NAME,
+};

@@ -1,12 +1,21 @@
-import process from 'process';
+import dotenv from "dotenv";
+dotenv.config();
+
+import {
+  DATABASE_USERNAME,
+  DATABASE_PASSWORD,
+  DATABASE_HOSTNAME
+} from "./db.config.js";
 const env = process.env.NODE_ENV || 'development';
-module.exports = {
+const dialect = process.env.DATABASE_DIALECT;
+
+const config = {
   development: {
-    username: process.env.DATABASE_USERNAME,
-    password: process.env.DATABASE_PASSWORD,
+    username: DATABASE_USERNAME,
+    password: DATABASE_PASSWORD,
     database: process.env.DATABASE_DEVELOPMENT_NAME,
-    host: process.env.DATABASE_HOSTNAME,
-    dialect: process.env.DATABASE_DIALECT,
+    host: DATABASE_HOSTNAME,
+    dialect,
     pool: {
       max: 5,
       min: 0,
@@ -15,18 +24,18 @@ module.exports = {
     },
   },
   test: {
-    username: process.env.DATABASE_USERNAME,
-    password: process.env.DATABASE_PASSWORD,
+    username: DATABASE_USERNAME,
+    password: DATABASE_PASSWORD,
     database: process.env.DATABASE_TEST_NAME,
-    host: process.env.DATABASE_HOSTNAME,
-    dialect: process.env.DATABASE_DIALECT,
+    host: DATABASE_HOSTNAME,
+    dialect,
   },
   production: {
-    username: process.env.DATABASE_USERNAME,
-    password: process.env.DATABASE_PASSWORD,
+    username: DATABASE_USERNAME,
+    password: DATABASE_PASSWORD,
     database: process.env.DATABASE_PRODUCTION_NAME,
-    host: process.env.DATABASE_HOSTNAME,
-    dialect: process.env.DATABASE_DIALECT,
+    host: DATABASE_HOSTNAME,
+    dialect,
   },
 };
 
