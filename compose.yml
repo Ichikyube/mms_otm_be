@@ -8,6 +8,9 @@
       depends_on:
         - postgres_db
         - parse-server
+      command: --mountGraphQL #--mountPlayground
+      volumes:
+        - parse_data:/parse-server
       networks:
       - otm-network
     parse-dashboard:
@@ -29,7 +32,8 @@
         PARSE_DASHBOARD_SSL_CERT: "sslCert"
         PARSE_DASHBOARD_CONFIG: undefined // Only for reference, it must not exist
         PARSE_DASHBOARD_COOKIE_SESSION_SECRET: undefined // set the cookie session secret, defaults to a random string. Use this option if you want sessions to work across multiple servers, or across restarts
-
+      networks:
+        - otm-network
     postgres_db:
       image: postgres:latest
       ports:
@@ -42,17 +46,6 @@
         - otm-network
       volumes:
         - postgres_data:/var/lib/postgresql/data
-    parse-server:
-      image: parseplatform/parse-server:latest
-      environment:
-        - PARSE_SERVER_APPLICATION_ID=myappid
-        - PARSE_SERVER_MASTER_KEY=mymasterkey
-        - PARSE_SERVER_DATABASE_URI=postgres://armin:3031323334@postgres:5432/mms_otm
-        - PARSE_SERVER_URL=http://express:3000/parse
-      volumes:
-        - parse_data:/parse-server
-      networks:
-      - otm-network
   volumes:
     postgres_data:
     parse_data:
