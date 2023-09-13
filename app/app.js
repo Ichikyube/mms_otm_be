@@ -7,12 +7,12 @@ import fileUpload from 'express-fileupload';
 import { graphqlHTTP } from 'express-graphql';
 import ParseServer, { ParseGraphQLServer } from 'parse-server';
 import cors from 'cors';
-import Parse from 'parse/node';
+// import Parse from 'parse/node';
 import FSFilesAdapter from '@parse/fs-files-adapter';
-import schema from './graphql/schema';
-import models from './models';
-import cloud from './cloud';
-import logger from './logger';
+import schema from './graphql/schema.js';
+import models from './models/index.js';
+import cloud from './cloud.js';
+import logger from './logger.js';
 
 const app = express();
 
@@ -72,7 +72,12 @@ export const parseConfig = {
 // Serve the Parse API on the /parse URL prefix
 const mountPath = process.env.PARSE_MOUNT || "/parse";
 const api = new ParseServer(parseConfig);
-
+const apps = [{
+  appId: process.env.PARSE_APP_ID,
+  masterKey: process.env.APP_MASTER_KEY,
+  appName: process.env.PARSE_APP_NAME,
+  serverURL: process.env.PARSE_SERVER_DOMAIN,
+}]
 // GraphQL configuration
 const parseGraphQLServer = new ParseGraphQLServer(api, {
   graphQLPath: '/graphql',
@@ -91,6 +96,7 @@ const dashboard = new ParseDashboard(
       allowInsecureHTTP: true,
   },
 );
+
 const allowedOrigins = ["http://localhost:5500",
                         "http://127.0.0.1:5500",
                         "http://apps.biznids.com:4040",
@@ -144,109 +150,109 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/test_fs", (req, res) => {
-  Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JSCRIPT_KEY);
+// app.get("/test_fs", (req, res) => {
+//   Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JSCRIPT_KEY);
 
-  Parse.serverURL = "https://umimarco.armin.co.id/parse";
+//   Parse.serverURL = "https://umimarco.armin.co.id/parse";
 
-  const textToConvert =
-    "Test Parse Server File: " + new Date().toLocaleString();
+//   const textToConvert =
+//     "Test Parse Server File: " + new Date().toLocaleString();
 
-  const base64 = Buffer.from(textToConvert).toString("base64");
+//   const base64 = Buffer.from(textToConvert).toString("base64");
 
-  const parseFile = new Parse.File("myfile.txt", { base64: base64 });
+//   const parseFile = new Parse.File("myfile.txt", { base64: base64 });
 
-  parseFile.save().then(
-    function () {
-      // The file has been saved to Parse.
+//   parseFile.save().then(
+//     function () {
+//       // The file has been saved to Parse.
 
-      res.json({
-        status: true,
+//       res.json({
+//         status: true,
 
-        parseFile: parseFile,
+//         parseFile: parseFile,
 
-        message: "This is fs parse working..",
-      });
-    },
-    function (error) {
-      // The file either could not be read, or could not be saved to Parse.
+//         message: "This is fs parse working..",
+//       });
+//     },
+//     function (error) {
+//       // The file either could not be read, or could not be saved to Parse.
 
-      res.json({
-        status: false,
+//       res.json({
+//         status: false,
 
-        message: error,
-      });
-    }
-  );
-});
+//         message: error,
+//       });
+//     }
+//   );
+// });
 
-app.post("/upload", (req, res) => {
-  try {
-    if (!req.files) {
-      res.send({
-        status: false,
+// app.post("/upload", (req, res) => {
+//   try {
+//     if (!req.files) {
+//       res.send({
+//         status: false,
 
-        message: "No file uploaded",
-      });
-    } else {
-      //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
+//         message: "No file uploaded",
+//       });
+//     } else {
+//       //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
 
-      let filetoupload = req.files.filetoupload;
+//       let filetoupload = req.files.filetoupload;
 
-      //Use the mv() method to place the file in upload directory (i.e. "uploads")
+//       //Use the mv() method to place the file in upload directory (i.e. "uploads")
 
-      //filetoupload.mv('./uploads/' + avatar.name);
+//       //filetoupload.mv('./uploads/' + avatar.name);
 
-      Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JSCRIPT_KEY);
+//       Parse.initialize(process.env.PARSE_APP_ID, process.env.PARSE_JSCRIPT_KEY);
 
-      Parse.serverURL = "https://umimarco.armin.co.id/parse";
+//       Parse.serverURL = "https://umimarco.armin.co.id/parse";
 
-      const textToConvert =
-        "Test Parse Server File: " + new Date().toLocaleString();
+//       const textToConvert =
+//         "Test Parse Server File: " + new Date().toLocaleString();
 
-      const base64 = Buffer.from(filetoupload.data).toString("base64");
+//       const base64 = Buffer.from(filetoupload.data).toString("base64");
 
-      const parseFile = new Parse.File(filetoupload.name, { base64: base64 });
+//       const parseFile = new Parse.File(filetoupload.name, { base64: base64 });
 
-      parseFile.save().then(
-        function () {
-          // The file has been saved to Parse.
+//       parseFile.save().then(
+//         function () {
+//           // The file has been saved to Parse.
 
-          res.json({
-            status: true,
+//           res.json({
+//             status: true,
 
-            parseFile: parseFile,
+//             parseFile: parseFile,
 
-            message: "This is fs parse working..",
-          });
-        },
-        function (error) {
-          // The file either could not be read, or could not be saved to Parse.
+//             message: "This is fs parse working..",
+//           });
+//         },
+//         function (error) {
+//           // The file either could not be read, or could not be saved to Parse.
 
-          res.json({
-            status: false,
+//           res.json({
+//             status: false,
 
-            message: error,
-          });
-        }
-      );
+//             message: error,
+//           });
+//         }
+//       );
 
-      //send response
+//       //send response
 
-      /*res.send({
-                status: true,
-                message: 'File is uploaded',
-                data: {
-                    name: filetoupload.name,
-                    mimetype: filetoupload.mimetype,
-                    size: filetoupload.size
-                }
-            });*/
-    }
-  } catch (err) {
-    res.status(500).send(err);
-  }
-});
+//       /*res.send({
+//                 status: true,
+//                 message: 'File is uploaded',
+//                 data: {
+//                     name: filetoupload.name,
+//                     mimetype: filetoupload.mimetype,
+//                     size: filetoupload.size
+//                 }
+//             });*/
+//     }
+//   } catch (err) {
+//     res.status(500).send(err);
+//   }
+// });
 
 const PORT = process.env.PARSE_SERVER_PORT || 4000;
 app.listen(PORT, async () => {

@@ -1,15 +1,14 @@
-const { GraphQLSchema, GraphQLObjectType } = require('graphql');
-const taskResolver = require('./resolvers/taskResolver');
+import { GraphQLSchema, GraphQLObjectType } from 'graphql';
+import UserType from './types/userType.js';
+import userResolver from './resolvers/userResolver.js';
 
 const RootQuery = new GraphQLObjectType({
   name: 'RootQueryType',
   fields: {
-    task: taskResolver.tasks,
+    task:userResolver.user,
   },
 });
 
-module.exports = new GraphQLSchema({
+export default new GraphQLSchema({
   query: RootQuery,
 });
-
-

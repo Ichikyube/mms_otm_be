@@ -33,7 +33,7 @@ class Cloud {
      * Delete all files when a document is deleted
      * @param className
      */
-    static deleteAllFilesWhenObjectIsDelete(className: string): void {
+    static deleteAllFilesWhenObjectIsDelete(className) {
         Parse.Cloud.beforeDelete(className, async (req) => {
             const fields = this.getFileFields(req.object);
 

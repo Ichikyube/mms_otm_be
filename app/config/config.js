@@ -1,4 +1,5 @@
-require("dotenv").config();
+import process from 'process';
+const env = process.env.NODE_ENV || 'development';
 module.exports = {
   development: {
     username: process.env.DATABASE_USERNAME,
@@ -28,3 +29,5 @@ module.exports = {
     dialect: process.env.DATABASE_DIALECT,
   },
 };
+
+export default config[env];
