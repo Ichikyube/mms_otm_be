@@ -2,29 +2,25 @@ import dotenv from "dotenv";
 dotenv.config({ allowInterpolation: true });
 
 import express from "express";
+import http from "http";
+import cors from "cors";
 import { join } from "path";
 import fileUpload from "express-fileupload";
 import { graphqlHTTP } from "express-graphql";
 import { ParseServer, ParseGraphQLServer } from "parse-server";
 import ParseDashboard from "parse-dashboard";
-import cors from "cors";
 
 // import schema from './graphql/schema.js';
 import models from "./models/index.js";
 import logger from "./logger.js";
 import __dirname from "./config/path.config.js";
-import {
-  PORT,
-  mountPath,
-  serverURL,
-  parseServerUrl,
-  parseConfig,
-} from "./config/parse.config.js";
+import { PORT, mountPath, parseConfig } from "./config/parse.config.mjs";
 import dashboardConfig from "./config/dashboard.config.js";
-const app = express();
 
 const api = new ParseServer(parseConfig);
-
+const app = express();
+// Serve the Parse API on the /parse URL prefix
+app.use(mountPath, api.app);
 // GraphQL configuration
 const parseGraphQLServer = new ParseGraphQLServer(api, {
   graphQLPath: "/graphql",
@@ -61,8 +57,6 @@ app.use(
   })
 );
 app.options("*", cors());
-// Serve the Parse API on the /parse URL prefix
-app.use(mountPath, api.app);
 
 // enable files upload
 app.use(
@@ -70,7 +64,6 @@ app.use(
     createParentPath: true,
   })
 );
-
 // Set the Cache-Control header for files
 app.use((req, res, next) => {
   const maxAge = process.env.CACHE_MAX_AGE || 2_592_000;
@@ -200,8 +193,8 @@ app.post("/upload", (req, res) => {
     res.status(500).send(err);
   }
 });
-
-app.listen(PORT, async () => {
+const httpServer = http.createServer(app);
+httpServer.listen(PORT, async () => {
   // await models.sequelize.sync(); // Sync the models with the database
   console.log(
     "Parse-Server up n running on PORT: ",
@@ -219,4 +212,4 @@ app.listen(PORT, async () => {
 });
 
 // This will enable the Live Query real-time server
-// await ParseServer.createLiveQueryServer(httpServer);
+await ParseServer.createLiveQueryServer(httpServer);

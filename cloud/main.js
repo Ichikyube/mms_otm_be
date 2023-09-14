@@ -1,8 +1,9 @@
-const nodemailer = require("nodemailer");
-const handlebars = require("handlebars");
-const fs = require("fs");
-const cron = require("node-cron");
-
+import nodemailer from "nodemailer";
+import handlebars from "handlebars";
+import cron from "node-cron";
+import { readFile } from 'fs/promises';
+import { dirname, join } from 'path';
+import __dirname from "../app/config/path.config.js";
 const cronAsset = async () => {
   let emailTo = [];
 
@@ -196,11 +197,9 @@ const cronAsset = async () => {
   emailTo.push("mromzy@gmail.com");
 
   let emailto_unique = [...new Set(emailTo)];
-
-  fs.readFile(
-    __dirname + "/templates/alertCertificate.html",
-    "utf8",
-    (err, html) => {
+  const filePath = join( __dirname, 'templates', 'alertCertificate.html');
+  readFile(filePath, 'utf8')
+    .then((html) => {
       let template = handlebars.compile(html);
 
       let replacements = {
@@ -263,619 +262,456 @@ const transporter = nodemailer.createTransport({
     pass: "P@ssw0rd#1!", // generated ethereal password
   },
 });
+export const cloud = () => {
+  Parse.Cloud.beforeSave("contact", async (request) => {
+    let prefix = "";
+    let availableNumber = 0;
+    let emailTo = "mromzy@gmail.com; nabil.n.f.h@gmail.com;";
 
-Parse.Cloud.beforeSave("contact", async (request) => {
-  let prefix = "";
-  let availableNumber = 0;
-  let emailTo = "mromzy@gmail.com; nabil.n.f.h@gmail.com;";
+    let IDNumber = request.object.get("number");
 
-  let IDNumber = request.object.get("number");
+    console.log("console log...");
+    console.log("request:");
+    console.log(IDNumber);
 
-  console.log("console log...");
-  console.log("request:");
-  console.log(IDNumber);
+    if (!IDNumber || IDNumber === "") {
+      const qMasterNumber = new Parse.Query("masternumber");
 
-  if (!IDNumber || IDNumber === "") {
-    const qMasterNumber = new Parse.Query("masternumber");
+      const masterNumber2 = await qMasterNumber.get("7dTSFKSZ9x").then(
+        (result) => {
+          availableNumber = result.get("available");
+          prefix = result.get("prefix");
 
-    const masterNumber2 = await qMasterNumber.get("7dTSFKSZ9x").then(
-      (result) => {
-        availableNumber = result.get("available");
-        prefix = result.get("prefix");
+          IDNumber = `${prefix}${availableNumber}`;
+          console.log(`ID Number: ${prefix}${availableNumber}`);
 
-        IDNumber = `${prefix}${availableNumber}`;
-        console.log(`ID Number: ${prefix}${availableNumber}`);
+          request.object.set("number", `${IDNumber}`);
+          request.object.save();
 
-        request.object.set("number", `${IDNumber}`);
-        request.object.save();
+          // result.set('available', availableNumber + 1);
+          result.increment("available");
+          // result.save();
 
-        // result.set('available', availableNumber + 1);
-        result.increment("available");
-        // result.save();
+          readFile(
+            __dirname + "/templates/NewContactEmail.html",
+            "utf8",
+            (err, html) => {
+              let template = handlebars.compile(html);
 
-        fs.readFile(
-          __dirname + "/templates/NewContactEmail.html",
-          "utf8",
-          (err, html) => {
-            let template = handlebars.compile(html);
+              let replacements = {
+                contactID: contactNumber,
+                firstname: "Muhammad",
+                lastname: "Romzi",
+              };
 
-            let replacements = {
-              contactID: contactNumber,
-              firstname: "Muhammad",
-              lastname: "Romzi",
-            };
+              let htmlToSend = template(replacements);
 
-            let htmlToSend = template(replacements);
+              let mailOptions = {
+                from: "info@armin.co.id",
+                to: emailTo,
+                subject: "New Contact Notification",
+                html: htmlToSend, // <= for html templated emails
+              };
 
-            let mailOptions = {
-              from: "info@armin.co.id",
-              to: emailTo,
-              subject: "New Contact Notification",
-              html: htmlToSend, // <= for html templated emails
-            };
+              transporter.sendMail(mailOptions, function (error, response) {
+                if (error) {
+                  console.log(error);
+                  callback(error);
+                }
 
-            transporter.sendMail(mailOptions, function (error, response) {
-              if (error) {
-                console.log(error);
-                callback(error);
-              }
+                console.log("Message sent: %s", info.messageId);
+              });
+            }
+          );
 
-              console.log("Message sent: %s", info.messageId);
-            });
-          }
-        );
+          return result;
+        },
+        (error) => {
+          console.error("Got an error " + error.code + " : " + error.message);
 
-        return result;
-      },
-      (error) => {
-        console.error("Got an error " + error.code + " : " + error.message);
+          return null;
+        }
+      );
+    }
+  });
 
-        return null;
+  Parse.Cloud.beforeSave("xticket", (request) => {
+    let prefix = "";
+    let availableNumber = 0;
+    let emailTo = "mromzy@gmail.com; nabil.n.f.h@gmail.com;";
+
+    let contactNumber = request.object.get("number");
+
+    console.log("console log...");
+    console.log("request:");
+    console.log(contactNumber);
+
+    var IDNumber = request.object.get("number");
+    var woSubject = request.object.get("subject");
+    var assignTo = request.object.get("assignto");
+
+    console.log("loging....");
+    console.log("request:");
+    console.log(IDNumber);
+    console.log(woSubject);
+    // console.log(assignTo.get("firstname"));
+
+    /*
+      if(!IDNumber || IDNumber === ""){
+          const queryMasterNumber = new Parse.Query("masternumber");
+          
+          queryMasterNumber.get("692dDylmBd", { useMasterKey: true })
+          .then(function(masterNumber) {
+              availableNumber = masterNumber.get("available");
+              prefix = masterNumber.get("prefix");
+              IDNumber= `${prefix}${availableNumber}`;
+              
+              console.log("available number:");
+              console.log(availableNumber);
+                  
+              request.object.set("number", IDNumber);
+              request.object.save();
+                  
+              // masterNumber.set('available', availableNumber + 1);
+              masterNumber.increment("available");
+              masterNumber.save();
+                  
+                  readFile(__dirname + '/templates/NewWoEmail.html', 'utf8', function(err, html)
+                  {
+                      let template = handlebars.compile(html);
+                      
+                      let replacements = {
+                          IDNumber: IDNumber,
+                          subject : woSubject,
+                          assignto : assignTo,
+                };
+        
+                let htmlToSend = template(replacements);
+        
+                let mailOptions = {
+                    from: 'info@armin.co.id',
+                    to: emailTo,
+                    subject: "New Work Order Notification",
+                    html: htmlToSend
+                  };
+              
+                transporter.sendMail(mailOptions, function (error, response)
+                {
+                    if (error) {
+                      console.log(error);
+                    callback(error);
+                  }
+          
+                  console.log('Message sent: %s', info.messageId);
+                });
+              });
+          
+                  return;
+              }).catch(function(error) {
+                  console.error("Got an error " + error.code + " : " + error.message);
+              });
       }
-    );
-  }
-});
-
-Parse.Cloud.beforeSave("xticket", (request) => {
-  let prefix = "";
-  let availableNumber = 0;
-  let emailTo = "mromzy@gmail.com; nabil.n.f.h@gmail.com;";
-
-  let contactNumber = request.object.get("number");
-
-  console.log("console log...");
-  console.log("request:");
-  console.log(contactNumber);
-
-  var IDNumber = request.object.get("number");
-  var woSubject = request.object.get("subject");
-  var assignTo = request.object.get("assignto");
-
-  console.log("loging....");
-  console.log("request:");
-  console.log(IDNumber);
-  console.log(woSubject);
-  // console.log(assignTo.get("firstname"));
+      */
+  });
 
   /*
-    if(!IDNumber || IDNumber === ""){
-        const queryMasterNumber = new Parse.Query("masternumber");
-        
-        queryMasterNumber.get("692dDylmBd", { useMasterKey: true })
-        .then(function(masterNumber) {
-            availableNumber = masterNumber.get("available");
-            prefix = masterNumber.get("prefix");
-            IDNumber= `${prefix}${availableNumber}`;
-            
-            console.log("available number:");
-            console.log(availableNumber);
-                
-            request.object.set("number", IDNumber);
-            request.object.save();
-                
-            // masterNumber.set('available', availableNumber + 1);
-            masterNumber.increment("available");
-            masterNumber.save();
-                
-                fs.readFile(__dirname + '/templates/NewWoEmail.html', 'utf8', function(err, html)
-                {
-                    let template = handlebars.compile(html);
-                    
-                    let replacements = {
-                        IDNumber: IDNumber,
-                        subject : woSubject,
-                        assignto : assignTo,
-			        };
-			
-			        let htmlToSend = template(replacements);
-			
-			        let mailOptions = {
-			            from: 'info@armin.co.id',
-			            to: emailTo,
-			            subject: "New Work Order Notification",
-			            html: htmlToSend
-    		        };
-    		    
-			        transporter.sendMail(mailOptions, function (error, response)
-			        {
-    			        if (error) {
-    				        console.log(error);
-    					    callback(error);
-    				    }
-				
-				        console.log('Message sent: %s', info.messageId);
-			        });
-		        });
-         
-                return;
-            }).catch(function(error) {
-                console.error("Got an error " + error.code + " : " + error.message);
-            });
-    }
-    */
-});
-
-/*
-const transporter = nodemailer.createTransport({
-    host: "mail.otmerak.com",
-    port: 465,
-    secure: true, // true for 465, false for other ports
-    auth: {
-        user: "ptotm.mms@otmerak.com", // generated ethereal user
-        pass: "password2021", // generated ethereal password
-    },
-});
-*/
-/*
-const transporter = nodemailer.createTransport({
-    host: "lyanna.id.rapidplex.com",
-    port: 465,
-    secure: true, // true for 465, false for other ports
-    auth: {
-        user: "ptotm.mms@otmerak.com", // generated ethereal user
-        pass: "P@ssw0rd#1!", // generated ethereal password
-    },
-});
-*/
-
-Parse.Cloud.define("test", async (request) => {
-  let result = null;
-
-  result = {
-    status: true,
-    message: "This is cloud api working..",
-    request: request,
-  };
-
-  console.log("result:");
-  console.log(result);
-
-  return result;
-});
-
-Parse.Cloud.define("generate_contact_number", async (request) => {
-  let prefix = "";
-  let availableNumber = 0;
-  let emailTo = "mromzy@gmail.com; nabil.n.f.h@gmail.com; enal@otmerak.com;";
-
-  let results = {
-    status: false,
-    data: {},
-  };
-
-  const qContact = new Parse.Query("contact");
-  let objectId = request.params.objectId;
-  let contact = await qContact.get(objectId).catch((err) => {
-    results.error = err;
-  });
-
-  console.log("console log...");
-  console.log("request:");
-  console.log(request.params);
-
-  if (!contact.number || contact.number === "" || true) {
-    const qMasterNumber = new Parse.Query("masternumber");
-
-    const masterNumber2 = await qMasterNumber.get("7dTSFKSZ9x").then(
-      (mn) => {
-        availableNumber = mn.get("available");
-        prefix = mn.get("prefix");
-
-        contact.set("number", `${prefix}${availableNumber}`);
-        contact.save();
-        results.data.contact = contact;
-
-        console.log(`contact.number (1) : ${prefix}${availableNumber}`);
-        console.log(`contact.number (2) : ${contact.get("number")}`);
-
-        // mn.set('available', availableNumber + 1);
-        mn.increment("available");
-        mn.save();
-
-        results.data.masterNumber = mn;
-
-        /*
-            fs.readFile(__dirname + '/templates/NewContactEmail.html', 'utf8', (err, html) => 
-            {
-                let template = handlebars.compile(html);
-                    
-                let replacements = {
-                    contactID: contactNumber,
-                    firstname : "Muhammad",
-                    lastname : "Romzi",
-		        };
-		
-		        let htmlToSend = template(replacements);
-		
-		        let mailOptions = {
-		            from: 'info@armin.co.id',
-		            to: emailTo,
-		            subject: "New Contact Notification",
-		            html: htmlToSend // <= for html templated emails
-		        };
-		    
-		        transporter.sendMail(mailOptions, function (error, response)
-		        {
-			        if (error) {
-				        console.log(error);
-				    }
-                });
-	        });
-            */
-        return mn;
+  const transporter = nodemailer.createTransport({
+      host: "mail.otmerak.com",
+      port: 465,
+      secure: true, // true for 465, false for other ports
+      auth: {
+          user: "ptotm.mms@otmerak.com", // generated ethereal user
+          pass: "password2021", // generated ethereal password
       },
-      (err) => {
-        results.error = err;
-        console.error("Got an error " + err.code + " : " + err.message);
-
-        return null;
-      }
-    );
-  }
-
-  return results;
-});
-
-Parse.Cloud.define("generate_wo_number", async (request) => {
-  let prefix = "";
-  let availableNumber = 0;
-  let emailTo = [];
-
-  let results = {
-    status: false,
-    message: "",
-    data: {
-      params: request.params,
-    },
-  };
-
-  const qTicket = new Parse.Query("ticket");
-  let objectId = request.params.objectId;
-
-  qTicket.select(["number", "subject", "statusticket"]);
-  qTicket.select([
-    "requester.department",
-    "requester.firstname",
-    "requester.lastname",
-    "requester.user.username",
-  ]);
-  qTicket.select([
-    "assignto.department",
-    "assignto.firstname",
-    "assignto.lastname",
-    "assignto.user.username",
-  ]);
-  qTicket.select([
-    "createdby.firstname",
-    "createdby.lastname",
-    "createdby.user.username",
-  ]);
-  // qTicket.include(["requester.user", "assignto.user", "createdby.user"]);
-
-  let ticket = await qTicket.get(objectId).catch((err) => {
-    results.error_get_ticket = err;
-
-    console.error("");
-    console.error("Got an error in query ticket.");
-    console.error("Error Code: " + err.code + " : " + err.message);
-    console.error("Error Message: " + err.message);
-
-    return results;
   });
+  */
+  /*
+  const transporter = nodemailer.createTransport({
+      host: "lyanna.id.rapidplex.com",
+      port: 465,
+      secure: true, // true for 465, false for other ports
+      auth: {
+          user: "ptotm.mms@otmerak.com", // generated ethereal user
+          pass: "P@ssw0rd#1!", // generated ethereal password
+      },
+  });
+  */
 
-  if (!ticket) {
-    results.message += "Cannot get ticket, ticket null/empty. \n";
+  Parse.Cloud.define("test", async (request) => {
+    let result = null;
 
-    return results;
-  }
-
-  results.data.wo_before = ticket.toJSON();
-
-  if (ticket.get("number")) {
-    results.message += "Ticket already created before. \n";
-
-    return results;
-  }
-
-  // if(!ticket.get("number") || ticket.get("number") === ""))
-
-  const qMasterNumber = new Parse.Query("masternumber");
-  const masterNumber = await qMasterNumber
-    .select(["prefix", "available"])
-    .get("692dDylmBd")
-    .catch((err) => {
-      results.error_get_master_number = err;
-
-      console.error("");
-      console.error("Got an error in query MasterNumber");
-      console.error("Error Code: " + err.code + " : " + err.message);
-      console.error("Error Message: " + err.message);
-
-      return results;
-    });
-
-  if (!masterNumber) {
-    results.message += "Cannot get Master Number. \n";
-
-    return results;
-  }
-
-  availableNumber = masterNumber.get("available");
-  prefix = masterNumber.get("prefix");
-
-  ticket.set("number", `${prefix}${availableNumber}`);
-  ticket.save();
-
-  // masterNumber.set('available', availableNumber + 1);
-  masterNumber.increment("available");
-  masterNumber.save();
-
-  let wo = ticket.toJSON();
-  results.data.wo_after = wo;
-
-  try {
-    wo.createdby.user.username && emailTo.push(wo.createdby.user.username);
-  } catch (err) {
-    results.message += "wo.createdby.user.username undefined. \n";
-  }
-
-  try {
-    if (wo.requester.department) {
-      const qEmployee = new Parse.Query("employee");
-
-      qEmployee.select("user.username");
-      qEmployee.equalTo("department", wo.requester.department);
-
-      let employees = await qEmployee.find().catch((err) => {
-        results.error_get_employee_in_dept_requester = err;
-
-        console.error("");
-        console.error("Got an error in get employee in dept requester.");
-        console.error("Error Code: " + err.code + " : " + err.message);
-        console.error("Error Message: " + err.message);
-
-        return results;
-      });
-
-      employees &&
-        employees.forEach((item) => {
-          let employee = item.toJSON();
-
-          emailTo.push(employee.user.username);
-        });
-    }
-  } catch (err) {
-    results.message += "wo.requester.department undefined. \n";
-  }
-
-  try {
-    if (wo.assignto.department) {
-      const qEmployee = new Parse.Query("employee");
-
-      qEmployee.select("user.username");
-      qEmployee.equalTo("department", wo.assignto.department);
-
-      let employees = await qEmployee.find().catch((err) => {
-        results.error_get_employee_in_dept_assignto = err;
-
-        console.error("");
-        console.error("Got an error in get employee in dept assignto.");
-        console.error("Error Code: " + err.code + " : " + err.message);
-        console.error("Error Message: " + err.message);
-
-        return results;
-      });
-
-      employees &&
-        employees.forEach((item) => {
-          let employee = item.toJSON();
-
-          emailTo.push(employee.user.username);
-        });
-    }
-  } catch (err) {
-    results.message += "wo.assignto.department undefined. \n";
-  }
-
-  // HSSE Dept
-  const qDeptHsse = new Parse.Query("departments");
-  qDeptHsse.equalTo("name", "HSSE");
-  let dept_hsse = await qDeptHsse.first();
-
-  if (dept_hsse) {
-    const qEmployee = new Parse.Query("employee");
-
-    qEmployee.select("user.username");
-    qEmployee.equalTo("department", dept_hsse);
-
-    let employees = await qEmployee.find().catch((err) => {
-      results.error_get_employee_in_dept_hsse = err;
-
-      console.error("");
-      console.error("Got an error in get employee in Dept HSSE.");
-      console.error("Error Code: " + err.code + " : " + err.message);
-      console.error("Error Message: " + err.message);
-
-      return results;
-    });
-
-    employees &&
-      employees.forEach((item) => {
-        let employee = item.toJSON();
-
-        emailTo.push(employee.user.username);
-      });
-  }
-
-  // Terminal Manager
-  const qDeptTerminalManager = new Parse.Query("departments");
-  qDeptTerminalManager.equalTo("name", "TERMINAL MANAGER");
-  let dept_terminal_manager = await qDeptTerminalManager.first();
-
-  if (dept_terminal_manager) {
-    const qEmployee = new Parse.Query("employee");
-
-    qEmployee.select("user.username");
-    qEmployee.equalTo("department", dept_terminal_manager);
-
-    let employees = await qEmployee.find().catch((err) => {
-      results.error_get_employee_in_dept_terminal_manager = err;
-
-      console.error("");
-      console.error("Got an error in get employee in Teminal Manager.");
-      console.error("Error Code: " + err.code + " : " + err.message);
-      console.error("Error Message: " + err.message);
-
-      return results;
-    });
-
-    employees &&
-      employees.forEach((item) => {
-        let employee = item.toJSON();
-
-        emailTo.push(employee.user.username);
-      });
-  }
-
-  emailTo.push("mromzy@gmail.com");
-
-  let emailto_unique = [...new Set(emailTo)];
-
-  fs.readFile(__dirname + "/templates/NewWoEmail.html", "utf8", (err, html) => {
-    let template = handlebars.compile(html);
-
-    let replacements = {
-      woNumber: wo.number,
-      woSubject: wo.subject,
-      woStatus: wo.statusticket,
-      woRequester:
-        wo.requester &&
-        `${wo.requester.firstname} ${wo.requester.lastname} [${wo.requester.user.username}]`,
-      woAssignTo:
-        wo.assignto &&
-        `${wo.assignto.firstname} ${wo.assignto.lastname} [${wo.assignto.user.username}]`,
-      woCreateBy:
-        wo.createdby &&
-        `${wo.createdby.firstname} ${wo.createdby.lastname} [${wo.createdby.user.username}]`,
+    result = {
+      status: true,
+      message: "This is cloud api working..",
+      request: request,
     };
 
-    let htmlToSend = template(replacements);
+    console.log("result:");
+    console.log(result);
 
-    //"ptotm.mms@otmerak.com"
-    let mailOptions = {
-      from: "ptotm.mms@otmerak.com",
-      to: emailto_unique.join("; "),
-      subject: `New ${wo.number} : ${wo.statusticket}`,
-      html: htmlToSend, // <= for html templated emails
+    return result;
+  });
+
+  Parse.Cloud.define("generate_contact_number", async (request) => {
+    let prefix = "";
+    let availableNumber = 0;
+    let emailTo = "mromzy@gmail.com; nabil.n.f.h@gmail.com; enal@otmerak.com;";
+
+    let results = {
+      status: false,
+      data: {},
     };
 
-    transporter.sendMail(mailOptions, function (error, response) {
-      if (err) {
-        results.error_send_email = err;
+    const qContact = new Parse.Query("contact");
+    let objectId = request.params.objectId;
+    let contact = await qContact.get(objectId).catch((err) => {
+      results.error = err;
+    });
+
+    console.log("console log...");
+    console.log("request:");
+    console.log(request.params);
+
+    if (!contact.number || contact.number === "" || true) {
+      const qMasterNumber = new Parse.Query("masternumber");
+
+      const masterNumber2 = await qMasterNumber.get("7dTSFKSZ9x").then(
+        (mn) => {
+          availableNumber = mn.get("available");
+          prefix = mn.get("prefix");
+
+          contact.set("number", `${prefix}${availableNumber}`);
+          contact.save();
+          results.data.contact = contact;
+
+          console.log(`contact.number (1) : ${prefix}${availableNumber}`);
+          console.log(`contact.number (2) : ${contact.get("number")}`);
+
+          // mn.set('available', availableNumber + 1);
+          mn.increment("available");
+          mn.save();
+
+          results.data.masterNumber = mn;
+
+          /*
+              readFile(__dirname + '/templates/NewContactEmail.html', 'utf8', (err, html) => 
+              {
+                  let template = handlebars.compile(html);
+                      
+                  let replacements = {
+                      contactID: contactNumber,
+                      firstname : "Muhammad",
+                      lastname : "Romzi",
+              };
+      
+              let htmlToSend = template(replacements);
+      
+              let mailOptions = {
+                  from: 'info@armin.co.id',
+                  to: emailTo,
+                  subject: "New Contact Notification",
+                  html: htmlToSend // <= for html templated emails
+              };
+          
+              transporter.sendMail(mailOptions, function (error, response)
+              {
+                if (error) {
+                  console.log(error);
+              }
+                  });
+            });
+              */
+          return mn;
+        },
+        (err) => {
+          results.error = err;
+          console.error("Got an error " + err.code + " : " + err.message);
+
+          return null;
+        }
+      );
+    }
+
+    return results;
+  });
+
+  Parse.Cloud.define("generate_wo_number", async (request) => {
+    let prefix = "";
+    let availableNumber = 0;
+    let emailTo = [];
+
+    let results = {
+      status: false,
+      message: "",
+      data: {
+        params: request.params,
+      },
+    };
+
+    const qTicket = new Parse.Query("ticket");
+    let objectId = request.params.objectId;
+
+    qTicket.select(["number", "subject", "statusticket"]);
+    qTicket.select([
+      "requester.department",
+      "requester.firstname",
+      "requester.lastname",
+      "requester.user.username",
+    ]);
+    qTicket.select([
+      "assignto.department",
+      "assignto.firstname",
+      "assignto.lastname",
+      "assignto.user.username",
+    ]);
+    qTicket.select([
+      "createdby.firstname",
+      "createdby.lastname",
+      "createdby.user.username",
+    ]);
+    // qTicket.include(["requester.user", "assignto.user", "createdby.user"]);
+
+    let ticket = await qTicket.get(objectId).catch((err) => {
+      results.error_get_ticket = err;
+
+      console.error("");
+      console.error("Got an error in query ticket.");
+      console.error("Error Code: " + err.code + " : " + err.message);
+      console.error("Error Message: " + err.message);
+
+      return results;
+    });
+
+    if (!ticket) {
+      results.message += "Cannot get ticket, ticket null/empty. \n";
+
+      return results;
+    }
+
+    results.data.wo_before = ticket.toJSON();
+
+    if (ticket.get("number")) {
+      results.message += "Ticket already created before. \n";
+
+      return results;
+    }
+
+    // if(!ticket.get("number") || ticket.get("number") === ""))
+
+    const qMasterNumber = new Parse.Query("masternumber");
+    const masterNumber = await qMasterNumber
+      .select(["prefix", "available"])
+      .get("692dDylmBd")
+      .catch((err) => {
+        results.error_get_master_number = err;
 
         console.error("");
-        console.error("Got an error in send email.");
+        console.error("Got an error in query MasterNumber");
         console.error("Error Code: " + err.code + " : " + err.message);
         console.error("Error Message: " + err.message);
+
+        return results;
+      });
+
+    if (!masterNumber) {
+      results.message += "Cannot get Master Number. \n";
+
+      return results;
+    }
+
+    availableNumber = masterNumber.get("available");
+    prefix = masterNumber.get("prefix");
+
+    ticket.set("number", `${prefix}${availableNumber}`);
+    ticket.save();
+
+    // masterNumber.set('available', availableNumber + 1);
+    masterNumber.increment("available");
+    masterNumber.save();
+
+    let wo = ticket.toJSON();
+    results.data.wo_after = wo;
+
+    try {
+      wo.createdby.user.username && emailTo.push(wo.createdby.user.username);
+    } catch (err) {
+      results.message += "wo.createdby.user.username undefined. \n";
+    }
+
+    try {
+      if (wo.requester.department) {
+        const qEmployee = new Parse.Query("employee");
+
+        qEmployee.select("user.username");
+        qEmployee.equalTo("department", wo.requester.department);
+
+        let employees = await qEmployee.find().catch((err) => {
+          results.error_get_employee_in_dept_requester = err;
+
+          console.error("");
+          console.error("Got an error in get employee in dept requester.");
+          console.error("Error Code: " + err.code + " : " + err.message);
+          console.error("Error Message: " + err.message);
+
+          return results;
+        });
+
+        employees &&
+          employees.forEach((item) => {
+            let employee = item.toJSON();
+
+            emailTo.push(employee.user.username);
+          });
       }
-    });
-  });
+    } catch (err) {
+      results.message += "wo.requester.department undefined. \n";
+    }
 
-  return results;
-});
+    try {
+      if (wo.assignto.department) {
+        const qEmployee = new Parse.Query("employee");
 
-Parse.Cloud.define("update_wo", async (request) => {
-  let emailTo = [];
+        qEmployee.select("user.username");
+        qEmployee.equalTo("department", wo.assignto.department);
 
-  let results = {
-    status: false,
-    message: "",
-    data: {
-      params: request.params,
-    },
-  };
+        let employees = await qEmployee.find().catch((err) => {
+          results.error_get_employee_in_dept_assignto = err;
 
-  const qTicket = new Parse.Query("ticket");
-  let objectId = request.params.objectId;
+          console.error("");
+          console.error("Got an error in get employee in dept assignto.");
+          console.error("Error Code: " + err.code + " : " + err.message);
+          console.error("Error Message: " + err.message);
 
-  qTicket.select(["number", "subject", "statusticket"]);
-  qTicket.select([
-    "requester.department",
-    "requester.firstname",
-    "requester.lastname",
-    "requester.user.username",
-  ]);
-  qTicket.select([
-    "assignto.department",
-    "assignto.firstname",
-    "assignto.lastname",
-    "assignto.user.username",
-  ]);
-  qTicket.select([
-    "createdby.firstname",
-    "createdby.lastname",
-    "createdby.user.username",
-  ]);
-  // qTicket.include(["requester.user", "assignto.user", "createdby.user"]);
+          return results;
+        });
 
-  let ticket = await qTicket.get(objectId).catch((err) => {
-    results.error_get_ticket = err;
+        employees &&
+          employees.forEach((item) => {
+            let employee = item.toJSON();
 
-    console.error("");
-    console.error("Got an error in query ticket.");
-    console.error("Error Code: " + err.code + " : " + err.message);
-    console.error("Error Message: " + err.message);
+            emailTo.push(employee.user.username);
+          });
+      }
+    } catch (err) {
+      results.message += "wo.assignto.department undefined. \n";
+    }
 
-    return results;
-  });
+    // HSSE Dept
+    const qDeptHsse = new Parse.Query("departments");
+    qDeptHsse.equalTo("name", "HSSE");
+    let dept_hsse = await qDeptHsse.first();
 
-  if (!ticket) {
-    results.message += "Cannot get ticket, ticket null/empty. \n";
-
-    return results;
-  }
-
-  let wo = ticket.toJSON();
-  results.data.wo = wo;
-
-  try {
-    wo.createdby.user.username && emailTo.push(wo.createdby.user.username);
-  } catch (err) {
-    results.message += "wo.createdby.user.username undefined. \n";
-  }
-
-  try {
-    if (wo.requester.department) {
+    if (dept_hsse) {
       const qEmployee = new Parse.Query("employee");
 
       qEmployee.select("user.username");
-      qEmployee.equalTo("department", wo.requester.department);
+      qEmployee.equalTo("department", dept_hsse);
 
       let employees = await qEmployee.find().catch((err) => {
-        results.error_get_employee_in_dept_requester = err;
+        results.error_get_employee_in_dept_hsse = err;
 
         console.error("");
-        console.error("Got an error in get employee in dept requester.");
+        console.error("Got an error in get employee in Dept HSSE.");
         console.error("Error Code: " + err.code + " : " + err.message);
         console.error("Error Message: " + err.message);
 
@@ -889,22 +725,23 @@ Parse.Cloud.define("update_wo", async (request) => {
           emailTo.push(employee.user.username);
         });
     }
-  } catch (err) {
-    results.message += "wo.requester.department undefined. \n";
-  }
 
-  try {
-    if (wo.assignto.department) {
+    // Terminal Manager
+    const qDeptTerminalManager = new Parse.Query("departments");
+    qDeptTerminalManager.equalTo("name", "TERMINAL MANAGER");
+    let dept_terminal_manager = await qDeptTerminalManager.first();
+
+    if (dept_terminal_manager) {
       const qEmployee = new Parse.Query("employee");
 
       qEmployee.select("user.username");
-      qEmployee.equalTo("department", wo.assignto.department);
+      qEmployee.equalTo("department", dept_terminal_manager);
 
       let employees = await qEmployee.find().catch((err) => {
-        results.error_get_employee_in_dept_assignto = err;
+        results.error_get_employee_in_dept_terminal_manager = err;
 
         console.error("");
-        console.error("Got an error in get employee in dept assignto.");
+        console.error("Got an error in get employee in Teminal Manager.");
         console.error("Error Code: " + err.code + " : " + err.message);
         console.error("Error Message: " + err.message);
 
@@ -918,78 +755,12 @@ Parse.Cloud.define("update_wo", async (request) => {
           emailTo.push(employee.user.username);
         });
     }
-  } catch (err) {
-    results.message += "wo.assignto.department undefined. \n";
-  }
 
-  // HSSE Dept
-  const qDeptHsse = new Parse.Query("departments");
-  qDeptHsse.equalTo("name", "HSSE");
-  let dept_hsse = await qDeptHsse.first();
+    emailTo.push("mromzy@gmail.com");
 
-  if (dept_hsse) {
-    const qEmployee = new Parse.Query("employee");
+    let emailto_unique = [...new Set(emailTo)];
 
-    qEmployee.select("user.username");
-    qEmployee.equalTo("department", dept_hsse);
-
-    let employees = await qEmployee.find().catch((err) => {
-      results.error_get_employee_in_dept_hsse = err;
-
-      console.error("");
-      console.error("Got an error in get employee in Dept HSSE.");
-      console.error("Error Code: " + err.code + " : " + err.message);
-      console.error("Error Message: " + err.message);
-
-      return results;
-    });
-
-    employees &&
-      employees.forEach((item) => {
-        let employee = item.toJSON();
-
-        emailTo.push(employee.user.username);
-      });
-  }
-
-  // Terminal Manager
-  const qDeptTerminalManager = new Parse.Query("departments");
-  qDeptTerminalManager.equalTo("name", "TERMINAL MANAGER");
-  let dept_terminal_manager = await qDeptTerminalManager.first();
-
-  if (dept_terminal_manager) {
-    const qEmployee = new Parse.Query("employee");
-
-    qEmployee.select("user.username");
-    qEmployee.equalTo("department", dept_terminal_manager);
-
-    let employees = await qEmployee.find().catch((err) => {
-      results.error_get_employee_in_dept_terminal_manager = err;
-
-      console.error("");
-      console.error("Got an error in get employee in Teminal Manager.");
-      console.error("Error Code: " + err.code + " : " + err.message);
-      console.error("Error Message: " + err.message);
-
-      return results;
-    });
-
-    employees &&
-      employees.forEach((item) => {
-        let employee = item.toJSON();
-
-        emailTo.push(employee.user.username);
-      });
-  }
-
-  emailTo.push("mromzy@gmail.com");
-
-  let emailto_unique = [...new Set(emailTo)];
-
-  fs.readFile(
-    __dirname + "/templates/UpdateWoEmail.html",
-    "utf8",
-    (err, html) => {
+    readFile(__dirname + "/templates/NewWoEmail.html", "utf8", (err, html) => {
       let template = handlebars.compile(html);
 
       let replacements = {
@@ -1013,7 +784,7 @@ Parse.Cloud.define("update_wo", async (request) => {
       let mailOptions = {
         from: "ptotm.mms@otmerak.com",
         to: emailto_unique.join("; "),
-        subject: `Update ${wo.number} : ${wo.statusticket}`,
+        subject: `New ${wo.number} : ${wo.statusticket}`,
         html: htmlToSend, // <= for html templated emails
       };
 
@@ -1027,8 +798,237 @@ Parse.Cloud.define("update_wo", async (request) => {
           console.error("Error Message: " + err.message);
         }
       });
-    }
-  );
+    });
 
-  return results;
-});
+    return results;
+  });
+
+  Parse.Cloud.define("update_wo", async (request) => {
+    let emailTo = [];
+
+    let results = {
+      status: false,
+      message: "",
+      data: {
+        params: request.params,
+      },
+    };
+
+    const qTicket = new Parse.Query("ticket");
+    let objectId = request.params.objectId;
+
+    qTicket.select(["number", "subject", "statusticket"]);
+    qTicket.select([
+      "requester.department",
+      "requester.firstname",
+      "requester.lastname",
+      "requester.user.username",
+    ]);
+    qTicket.select([
+      "assignto.department",
+      "assignto.firstname",
+      "assignto.lastname",
+      "assignto.user.username",
+    ]);
+    qTicket.select([
+      "createdby.firstname",
+      "createdby.lastname",
+      "createdby.user.username",
+    ]);
+    // qTicket.include(["requester.user", "assignto.user", "createdby.user"]);
+
+    let ticket = await qTicket.get(objectId).catch((err) => {
+      results.error_get_ticket = err;
+
+      console.error("");
+      console.error("Got an error in query ticket.");
+      console.error("Error Code: " + err.code + " : " + err.message);
+      console.error("Error Message: " + err.message);
+
+      return results;
+    });
+
+    if (!ticket) {
+      results.message += "Cannot get ticket, ticket null/empty. \n";
+
+      return results;
+    }
+
+    let wo = ticket.toJSON();
+    results.data.wo = wo;
+
+    try {
+      wo.createdby.user.username && emailTo.push(wo.createdby.user.username);
+    } catch (err) {
+      results.message += "wo.createdby.user.username undefined. \n";
+    }
+
+    try {
+      if (wo.requester.department) {
+        const qEmployee = new Parse.Query("employee");
+
+        qEmployee.select("user.username");
+        qEmployee.equalTo("department", wo.requester.department);
+
+        let employees = await qEmployee.find().catch((err) => {
+          results.error_get_employee_in_dept_requester = err;
+
+          console.error("");
+          console.error("Got an error in get employee in dept requester.");
+          console.error("Error Code: " + err.code + " : " + err.message);
+          console.error("Error Message: " + err.message);
+
+          return results;
+        });
+
+        employees &&
+          employees.forEach((item) => {
+            let employee = item.toJSON();
+
+            emailTo.push(employee.user.username);
+          });
+      }
+    } catch (err) {
+      results.message += "wo.requester.department undefined. \n";
+    }
+
+    try {
+      if (wo.assignto.department) {
+        const qEmployee = new Parse.Query("employee");
+
+        qEmployee.select("user.username");
+        qEmployee.equalTo("department", wo.assignto.department);
+
+        let employees = await qEmployee.find().catch((err) => {
+          results.error_get_employee_in_dept_assignto = err;
+
+          console.error("");
+          console.error("Got an error in get employee in dept assignto.");
+          console.error("Error Code: " + err.code + " : " + err.message);
+          console.error("Error Message: " + err.message);
+
+          return results;
+        });
+
+        employees &&
+          employees.forEach((item) => {
+            let employee = item.toJSON();
+
+            emailTo.push(employee.user.username);
+          });
+      }
+    } catch (err) {
+      results.message += "wo.assignto.department undefined. \n";
+    }
+
+    // HSSE Dept
+    const qDeptHsse = new Parse.Query("departments");
+    qDeptHsse.equalTo("name", "HSSE");
+    let dept_hsse = await qDeptHsse.first();
+
+    if (dept_hsse) {
+      const qEmployee = new Parse.Query("employee");
+
+      qEmployee.select("user.username");
+      qEmployee.equalTo("department", dept_hsse);
+
+      let employees = await qEmployee.find().catch((err) => {
+        results.error_get_employee_in_dept_hsse = err;
+
+        console.error("");
+        console.error("Got an error in get employee in Dept HSSE.");
+        console.error("Error Code: " + err.code + " : " + err.message);
+        console.error("Error Message: " + err.message);
+
+        return results;
+      });
+
+      employees &&
+        employees.forEach((item) => {
+          let employee = item.toJSON();
+
+          emailTo.push(employee.user.username);
+        });
+    }
+
+    // Terminal Manager
+    const qDeptTerminalManager = new Parse.Query("departments");
+    qDeptTerminalManager.equalTo("name", "TERMINAL MANAGER");
+    let dept_terminal_manager = await qDeptTerminalManager.first();
+
+    if (dept_terminal_manager) {
+      const qEmployee = new Parse.Query("employee");
+
+      qEmployee.select("user.username");
+      qEmployee.equalTo("department", dept_terminal_manager);
+
+      let employees = await qEmployee.find().catch((err) => {
+        results.error_get_employee_in_dept_terminal_manager = err;
+
+        console.error("");
+        console.error("Got an error in get employee in Teminal Manager.");
+        console.error("Error Code: " + err.code + " : " + err.message);
+        console.error("Error Message: " + err.message);
+
+        return results;
+      });
+
+      employees &&
+        employees.forEach((item) => {
+          let employee = item.toJSON();
+
+          emailTo.push(employee.user.username);
+        });
+    }
+
+    emailTo.push("mromzy@gmail.com");
+
+    let emailto_unique = [...new Set(emailTo)];
+
+    readFile(
+      __dirname + "/templates/UpdateWoEmail.html",
+      "utf8",
+      (err, html) => {
+        let template = handlebars.compile(html);
+
+        let replacements = {
+          woNumber: wo.number,
+          woSubject: wo.subject,
+          woStatus: wo.statusticket,
+          woRequester:
+            wo.requester &&
+            `${wo.requester.firstname} ${wo.requester.lastname} [${wo.requester.user.username}]`,
+          woAssignTo:
+            wo.assignto &&
+            `${wo.assignto.firstname} ${wo.assignto.lastname} [${wo.assignto.user.username}]`,
+          woCreateBy:
+            wo.createdby &&
+            `${wo.createdby.firstname} ${wo.createdby.lastname} [${wo.createdby.user.username}]`,
+        };
+
+        let htmlToSend = template(replacements);
+
+        //"ptotm.mms@otmerak.com"
+        let mailOptions = {
+          from: "ptotm.mms@otmerak.com",
+          to: emailto_unique.join("; "),
+          subject: `Update ${wo.number} : ${wo.statusticket}`,
+          html: htmlToSend, // <= for html templated emails
+        };
+
+        transporter.sendMail(mailOptions, function (error, response) {
+          if (err) {
+            results.error_send_email = err;
+
+            console.error("");
+            console.error("Got an error in send email.");
+            console.error("Error Code: " + err.code + " : " + err.message);
+            console.error("Error Message: " + err.message);
+          }
+        });
+      }
+    );
+
+    return results;
+  });
+}

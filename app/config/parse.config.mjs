@@ -1,22 +1,27 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import path from "path";
+
+import { pathToFileURL } from "url";
+import __dirname from "./path.config.js";
 import FSFilesAdapter from "@parse/fs-files-adapter";
 import databaseURI from "./db.config.js";
+import { cloud } from "../../cloud/main.js";
+import { readFile } from "fs/promises";
 export const PORT = process.env.PARSE_SERVER_PORT || 4000;
 
 export const mountPath = process.env.PARSE_MOUNT || "/parse";
 export const serverURL = `${process.env.PARSE_SERVER_DOMAIN}:${PORT}`;
 export const parseServerUrl = serverURL + "/parse";
-
 const fsAdapter = new FSFilesAdapter({
-  filesSubDirectory: "my/files/folder", // optional, defaults to ./files
-  encryptionKey: "someKey", //mandatory if you want to encrypt files
+  // encryptionKey: "someKey", //mandatory if you want to encrypt files
 });
 
+//const cloudPath = pathToFileURL(path.normalize(path.join(process.cwd(), 'cloud', 'main.js'))).href;
 export const parseConfig = {
   databaseURI,
-  // cloud: process.env.CLOUD_CODE_MAIN || dirname + "/cloud/main.js",
+  cloud,
   appId: process.env.PARSE_APP_ID || "myAppId",
   masterKey: process.env.PARSE_MASTER_KEY || "", //Add your master key here. Keep it secret!
   restApiKey: process.env.PARSE_REST_KEY,
@@ -30,8 +35,9 @@ export const parseConfig = {
   publicServerURL: parseServerUrl, //parseServerUrl,
   // Your apps name. This will appear in the subject and body of the emails that are sent.
   appName: process.env.PARSE_APP_NAME,
+  masterKeyIps: ["127.0.0.1", "0.0.0.0/0", "::/1"],
   // Enable email verification
-  verifyUserEmails: true,
+  verifyUserEmails: false,
   allowClientClassCreation: false,
   allowExpiredAuthDataToken: false,
   // Set email verification token validity to 2 hours
@@ -53,6 +59,6 @@ export const parseConfig = {
     },
   },
   liveQuery: {
-    classNames: ["Posts", "Comments"], // List of classes to support for query subscriptions
+    classNames: ["Employee", "Comments"], // List of classes to support for query subscriptions
   },
 };
