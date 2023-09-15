@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 import handlebars from "handlebars";
 import cron from "node-cron";
-import { readFile } from 'fs/promises';
-import { dirname, join } from 'path';
+import { readFile } from "fs/promises";
+import { dirname, join } from "path";
 import __dirname from "../app/config/path.config.js";
 const cronAsset = async () => {
   let emailTo = [];
@@ -197,52 +197,55 @@ const cronAsset = async () => {
   emailTo.push("mromzy@gmail.com");
 
   let emailto_unique = [...new Set(emailTo)];
-  const filePath = join( __dirname, 'templates', 'alertCertificate.html');
-  readFile(filePath, 'utf8')
-    .then((html) => {
-      let template = handlebars.compile(html);
-
-      let replacements = {
-        listAlreadyCertificates: listAlreadyExpiredCertificates.join(""),
-        listTobeCertificates: listTobeExpiredCertificates.join(""),
-      };
-
-      let htmlToSend = template(replacements);
-
-      const CertificateLog = Parse.Object.extend("CertificateLog");
-      const certificateLog = new CertificateLog();
-
-      certificateLog.set("message", htmlToSend);
-      certificateLog.set(
-        "warning_date",
-        new Date(new Date().toLocaleDateString())
-      );
-
-      certificateLog.save();
-
-      //info@armin.co.id
-      let mailOptions = {
-        from: "ptotm.mms@otmerak.com",
-        to: emailto_unique.join("; "),
-        subject: `Warning Notification: Expired Certificates`,
-        html: htmlToSend, // <= for html templated emails
-      };
-
-      transporter.sendMail(mailOptions, function (error, response) {
-        if (error) {
-          const ErrorLog = Parse.Object.extend("errorlog");
-          const errorlog = new ErrorLog();
-
-          errorlog.set("error_message", "cannot send email");
-          errorlog.set("error_object", JSON.stringify(error));
-
-          errorlog.save();
-
-          console.log(error);
-        }
-      });
-    }
+  const filePath = join(
+    process.cwd(),
+    "cloud",
+    "templates",
+    "alertCertificate.html"
   );
+  readFile(filePath, "utf8").then((html) => {
+    let template = handlebars.compile(html);
+
+    let replacements = {
+      listAlreadyCertificates: listAlreadyExpiredCertificates.join(""),
+      listTobeCertificates: listTobeExpiredCertificates.join(""),
+    };
+
+    let htmlToSend = template(replacements);
+
+    const CertificateLog = Parse.Object.extend("CertificateLog");
+    const certificateLog = new CertificateLog();
+
+    certificateLog.set("message", htmlToSend);
+    certificateLog.set(
+      "warning_date",
+      new Date(new Date().toLocaleDateString())
+    );
+
+    certificateLog.save();
+
+    //info@armin.co.id
+    let mailOptions = {
+      from: "ptotm.mms@otmerak.com",
+      to: emailto_unique.join("; "),
+      subject: `Warning Notification: Expired Certificates`,
+      html: htmlToSend, // <= for html templated emails
+    };
+
+    transporter.sendMail(mailOptions, function (error, response) {
+      if (error) {
+        const ErrorLog = Parse.Object.extend("errorlog");
+        const errorlog = new ErrorLog();
+
+        errorlog.set("error_message", "cannot send email");
+        errorlog.set("error_object", JSON.stringify(error));
+
+        errorlog.save();
+
+        console.log(error);
+      }
+    });
+  });
 };
 //0 1 * * *
 cron.schedule("*/2 * * * *", () => {
@@ -293,7 +296,7 @@ export const cloud = () => {
           // result.save();
 
           readFile(
-            __dirname + "/templates/NewContactEmail.html",
+            process.cwd() + "/cloud/templates/NewContactEmail.html",
             "utf8",
             (err, html) => {
               let template = handlebars.compile(html);
@@ -376,7 +379,7 @@ export const cloud = () => {
               masterNumber.increment("available");
               masterNumber.save();
                   
-                  readFile(__dirname + '/templates/NewWoEmail.html', 'utf8', function(err, html)
+                  readFile(process.cwd() + "/cloud/templates/NewWoEmail.html', 'utf8', function(err, html)
                   {
                       let template = handlebars.compile(html);
                       
@@ -494,7 +497,7 @@ export const cloud = () => {
           results.data.masterNumber = mn;
 
           /*
-              readFile(__dirname + '/templates/NewContactEmail.html', 'utf8', (err, html) => 
+              readFile(process.cwd() + "/cloud/templates/NewContactEmail.html', 'utf8', (err, html) => 
               {
                   let template = handlebars.compile(html);
                       
@@ -760,45 +763,49 @@ export const cloud = () => {
 
     let emailto_unique = [...new Set(emailTo)];
 
-    readFile(__dirname + "/templates/NewWoEmail.html", "utf8", (err, html) => {
-      let template = handlebars.compile(html);
+    readFile(
+      process.cwd() + "/cloud/templates/NewWoEmail.html",
+      "utf8",
+      (err, html) => {
+        let template = handlebars.compile(html);
 
-      let replacements = {
-        woNumber: wo.number,
-        woSubject: wo.subject,
-        woStatus: wo.statusticket,
-        woRequester:
-          wo.requester &&
-          `${wo.requester.firstname} ${wo.requester.lastname} [${wo.requester.user.username}]`,
-        woAssignTo:
-          wo.assignto &&
-          `${wo.assignto.firstname} ${wo.assignto.lastname} [${wo.assignto.user.username}]`,
-        woCreateBy:
-          wo.createdby &&
-          `${wo.createdby.firstname} ${wo.createdby.lastname} [${wo.createdby.user.username}]`,
-      };
+        let replacements = {
+          woNumber: wo.number,
+          woSubject: wo.subject,
+          woStatus: wo.statusticket,
+          woRequester:
+            wo.requester &&
+            `${wo.requester.firstname} ${wo.requester.lastname} [${wo.requester.user.username}]`,
+          woAssignTo:
+            wo.assignto &&
+            `${wo.assignto.firstname} ${wo.assignto.lastname} [${wo.assignto.user.username}]`,
+          woCreateBy:
+            wo.createdby &&
+            `${wo.createdby.firstname} ${wo.createdby.lastname} [${wo.createdby.user.username}]`,
+        };
 
-      let htmlToSend = template(replacements);
+        let htmlToSend = template(replacements);
 
-      //"ptotm.mms@otmerak.com"
-      let mailOptions = {
-        from: "ptotm.mms@otmerak.com",
-        to: emailto_unique.join("; "),
-        subject: `New ${wo.number} : ${wo.statusticket}`,
-        html: htmlToSend, // <= for html templated emails
-      };
+        //"ptotm.mms@otmerak.com"
+        let mailOptions = {
+          from: "ptotm.mms@otmerak.com",
+          to: emailto_unique.join("; "),
+          subject: `New ${wo.number} : ${wo.statusticket}`,
+          html: htmlToSend, // <= for html templated emails
+        };
 
-      transporter.sendMail(mailOptions, function (error, response) {
-        if (err) {
-          results.error_send_email = err;
+        transporter.sendMail(mailOptions, function (error, response) {
+          if (err) {
+            results.error_send_email = err;
 
-          console.error("");
-          console.error("Got an error in send email.");
-          console.error("Error Code: " + err.code + " : " + err.message);
-          console.error("Error Message: " + err.message);
-        }
-      });
-    });
+            console.error("");
+            console.error("Got an error in send email.");
+            console.error("Error Code: " + err.code + " : " + err.message);
+            console.error("Error Message: " + err.message);
+          }
+        });
+      }
+    );
 
     return results;
   });
@@ -986,7 +993,7 @@ export const cloud = () => {
     let emailto_unique = [...new Set(emailTo)];
 
     readFile(
-      __dirname + "/templates/UpdateWoEmail.html",
+      process.cwd() + "/cloud/templates/UpdateWoEmail.html",
       "utf8",
       (err, html) => {
         let template = handlebars.compile(html);
@@ -1031,4 +1038,4 @@ export const cloud = () => {
 
     return results;
   });
-}
+};

@@ -7,10 +7,6 @@ ADD . /parse
 WORKDIR /parse
 RUN npm install
 
-ENV APP_ID otm_mms
-ENV MASTER_KEY armin_master_otm_mms
-ENV DATABASE_URI postgres://armin:3031323334@localhost:5432/mms_otm
-
 # Optional (default : 'parse/cloud/main.js')
 # ENV CLOUD_CODE_MAIN cloudCodePath
 
